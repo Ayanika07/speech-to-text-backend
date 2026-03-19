@@ -1,5 +1,13 @@
 require("dotenv").config({ path: __dirname + "/.env" });
 // redeploy trigger
+const { execSync } = require("child_process");
+
+try {
+  console.log("Installing dependencies...");
+  execSync("npm install", { stdio: "inherit" });
+} catch (e) {
+  console.log("Install failed:", e);
+}
 console.log("ENV:", process.env.MONGO_URI);
 const express = require("express");
 const mongoose = require("mongoose");
