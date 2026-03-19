@@ -156,8 +156,14 @@ app.listen(PORT, () => {
 
 const axios = require("axios");
 
-app.post("/upload-audio", upload.single("audio"), async (req, res) => {
+app.post("/api/transcribe", upload.single("audio"), async (req, res) => {
   try {
+    console.log("API HIT");
+
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
+
     const audioBuffer = fs.readFileSync(req.file.path);
 
     const response = await axios.post(
@@ -167,16 +173,29 @@ app.post("/upload-audio", upload.single("audio"), async (req, res) => {
         headers: {
           Authorization: `Bearer ${process.env.HF_TOKEN}`,
           "Content-Type": "audio/wav"
-        }
+        },
+        timeout: 120000
       }
     );
 
-    res.json({
-      transcription: response.data.text
+    const transcription = response.data.text || "No transcription";
+
+    console.log("Transcription:", transcription);
+
+    const userId = req.body.userId || "test-user";
+
+    await Transcription.create({
+      transcription,
+      userId
     });
 
+    res.json({ transcription });
+
   } catch (err) {
-    console.error(err.response?.data || err.message);
-    res.status(500).json({ error: "Transcription failed" });
+    console.error("ERROR:", err.response?.data || err.message);
+
+    res.status(500).json({
+      error: "Transcription failed"
+    });
   }
 });
