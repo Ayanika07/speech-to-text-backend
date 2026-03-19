@@ -77,6 +77,8 @@ app.get("/transcriptions", async (req, res) => {
 
 app.post("/upload-audio", upload.single("audio"), async (req, res) => {
   try {
+    console.log("API HIT");
+    console.log("FILE:", req.file);
 
     if (!req.file) {
       return res.status(400).json({ error: "No file uploaded" });
@@ -120,10 +122,10 @@ app.post("/upload-audio", upload.single("audio"), async (req, res) => {
 
         await newAudio.save();
 
-        await Transcription.create({
-          transcription,
-          userId
-        });
+    await Transcription.create({
+      transcription,
+      userId
+    });
 
         res.json({
           message: "Audio uploaded and transcribed",
