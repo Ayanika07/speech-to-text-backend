@@ -161,49 +161,7 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
-
-const axios = require("axios");
-
-app.post("/api/transcribe", upload.single("audio"), async (req, res) => {
-  try {
-    console.log("API HIT");
-
-    if (!req.file) {
-      return res.status(400).json({ error: "No file uploaded" });
-    }
-
-    const audioBuffer = fs.readFileSync(req.file.path);
-
-    const response = await axios.post(
-      "https://api-inference.huggingface.co/models/openai/whisper-small",
-      audioBuffer,
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.HF_TOKEN}`,
-          "Content-Type": "audio/wav"
-        },
-        timeout: 120000
-      }
-    );
-
-    const transcription = response.data.text || "No transcription";
-
-    console.log("Transcription:", transcription);
-
-    const userId = req.body.userId || "test-user";
-
-    await Transcription.create({
-      transcription,
-      userId
-    });
-
-    res.json({ transcription });
-
-  } catch (err) {
-    console.error("ERROR:", err.response?.data || err.message);
-
-    res.status(500).json({
-      error: "Transcription failed"
-    });
-  }
-});
+const transcription = "Demo transcription working";
+res.json({
+  transcription
+})
