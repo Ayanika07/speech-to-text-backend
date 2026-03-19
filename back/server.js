@@ -1,4 +1,4 @@
-require("dotenv").config();
+require("dotenv").config({ path: __dirname + "/.env" });
 console.log("ENV:", process.env.MONGO_URI);
 const express = require("express");
 const mongoose = require("mongoose");
@@ -15,15 +15,20 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+/*---------------- MONGODB CONNECTION ---------------- */
 
-/* ---------------- MONGODB ---------------- */
-mongoose.connect("mongodb://127.0.0.1:27017/speechtext")
-  .then(() => console.log("MongoDB connected"))
-  .catch(err => console.log(err));
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log("MongoDB connected"))
-  .catch(err => console.log(err));
+const connectDB = async () => {
+  try {
+    if (mongoose.connection.readyState === 1) return;
 
+    await mongoose.connect(process.env.MONGO_URI);
+    console.log("MongoDB Connected");
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+connectDB();
 
 /* ---------------- UPLOAD FOLDER ---------------- */
 
