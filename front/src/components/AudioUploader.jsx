@@ -22,7 +22,7 @@ useEffect(() => {
   });
 }, []);
 
-  // UPLOAD AUDIO
+  // ✅ UPLOAD AUDIO
   const uploadAudio = async (inputFile) => {
     if (!inputFile) return;
 
@@ -41,8 +41,8 @@ useEffect(() => {
 
       setTranscription(res.data.transcription);
 
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.error(err);
       setError("⚠️ Failed to transcribe audio.");
     } finally {
       setLoading(false);
@@ -62,7 +62,7 @@ useEffect(() => {
     ];
 
     if (!validTypes.includes(selectedFile.type)) {
-      setError("❌ Invalid file type. Please upload an audio file.");
+      setError("❌ Invalid file type.");
       return;
     }
 
@@ -96,7 +96,7 @@ useEffect(() => {
     }
   };
 
-  // STOP RECORDING
+  // ✅ STOP RECORDING
   const stopRecording = () => {
     mediaRecorderRef.current.stop();
     setRecording(false);
@@ -104,48 +104,50 @@ useEffect(() => {
 
   // FETCH HISTORY
   useEffect(() => {
+    if (!user) return;
+
     const fetchTranscriptions = async () => {
       try {
         const res = await axios.get("http://localhost:5000/transcriptions");
         setHistory(res.data);
+
       } catch (err) {
+        console.error(err);
         setError("⚠️ Failed to load history.");
       }
     };
 
     fetchTranscriptions();
-  }, []);
+  }, [user]);
 
   return (
-    <div className="min-h-screen font-poppins flex flex-col items-center justify-center text-center
+    <div className="min-h-screen flex flex-col items-center justify-center text-center
     bg-gradient-to-br from-gray-900 via-purple-900 to-black text-white px-4">
 
-      {/* HERO TITLE */}
-      <h1 className="text-6xl md:text-7xl font-extrabold mb-4 tracking-wide">
+      <h1 className="text-6xl font-bold mb-4">
         🎤 Speech Recorder
       </h1>
 
-      {/* SUBTITLE */}
-      <p className="text-lg md:text-xl text-gray-300 mb-10 max-w-xl">
-        Upload audio or record your voice and convert it instantly
+      <p className="mb-6 text-gray-300">
+        Upload or record audio to transcribe instantly
       </p>
+
+      {/* LOGIN */}
       <button
-onClick={async () => {
-  const { error } = await supabase.auth.signInWithOtp({
-    email: prompt("Enter your email")
-  });
+        onClick={async () => {
+          const { error } = await supabase.auth.signInWithOtp({
+            email: prompt("Enter your email")
+          });
 
-  if (error) alert(error.message);
-  else alert("Check your email for login link");
-}}
-className="mb-4 px-4 py-2 bg-blue-500 rounded"
-> 
-Login
-</button>
+          if (error) alert(error.message);
+          else alert("Check your email");
+        }}
+        className="mb-4 px-4 py-2 bg-blue-500 rounded"
+      >
+        Login
+      </button>
 
-      {/* GLASS CARD */}
-      <div className="backdrop-blur-xl bg-white/10 border border-white/20
-      p-10 rounded-2xl shadow-2xl flex flex-col items-center w-full max-w-2xl space-y-4">
+      <div className="bg-white/10 p-6 rounded-xl w-full max-w-xl">
 
         {/* FILE INPUT */}
         <input
@@ -158,84 +160,46 @@ Login
 
         <button
           onClick={() => fileInputRef.current.click()}
-          className="w-full py-4 text-lg rounded-xl
-          bg-gradient-to-r from-purple-500 to-pink-500
-          text-white font-semibold hover:scale-105 transition"
+          className="w-full py-3 mb-3 bg-purple-500 rounded"
         >
-          Choose File
+          Upload Audio
         </button>
 
-        {/* RECORD BUTTON */}
+        {/* RECORD */}
         {!recording ? (
           <button
             onClick={startRecording}
-            className="w-full py-4 text-lg rounded-xl
-            bg-green-500 text-white font-semibold
-            hover:bg-green-600 hover:scale-105 transition"
+            className="w-full py-3 bg-green-500 rounded"
           >
             Start Recording
           </button>
         ) : (
           <button
             onClick={stopRecording}
-            className="bg-red-500 hover:bg-red-600
-            px-10 py-4 text-lg rounded-full shadow-lg transition"
+            className="w-full py-3 bg-red-500 rounded"
           >
             Stop Recording
           </button>
         )}
 
-        {/* RECORDING STATUS */}
-        {recording && (
-          <div className="flex items-center gap-2 mt-2">
-            <div className="w-3 h-3 bg-red-500 rounded-full animate-ping"></div>
-            <span className="text-red-400">Recording...</span>
-          </div>
-        )}
-
-        {/* ERROR */}
-        {error && (
-          <p className="text-red-400 font-medium">
-            {error}
-          </p>
-        )}
-
-        {/* LOADING */}
-        {loading && (
-          <p className="text-yellow-400 animate-pulse">
-            Transcribing...
-          </p>
-        )}
+        {/* STATUS */}
+        {recording && <p className="mt-2 text-red-400">Recording...</p>}
+        {loading && <p className="mt-2 text-yellow-400">Transcribing...</p>}
+        {error && <p className="mt-2 text-red-400">{error}</p>}
 
         {/* TRANSCRIPTION */}
-        <div className="bg-black/40 backdrop-blur-md
-        p-5 rounded-xl shadow-lg w-full">
-
-          <h2 className="text-xl font-semibold mb-2">
-            Transcription
-          </h2>
-
-          <p className="text-gray-300">
-            {transcription || "Your speech will appear here"}
-          </p>
+        <div className="mt-4 p-3 bg-black/40 rounded">
+          <h2 className="font-semibold">Result:</h2>
+          <p>{transcription || "No transcription yet"}</p>
         </div>
 
         {/* HISTORY */}
-        <div className="w-full">
-
-          <h2 className="text-2xl font-bold mb-4">
-            Previous Transcriptions
-          </h2>
+        <div className="mt-4">
+          <h2 className="font-semibold mb-2">History</h2>
 
           {history.map((item) => (
-            <div
-              key={item._id}
-              className="bg-black/50 p-4 mb-3 rounded-xl
-              shadow-md hover:scale-105 transition"
-            >
-              <p className="text-gray-200">
-                {item.transcription}
-              </p>
+            <div key={item._id} className="bg-black/50 p-2 mb-2 rounded">
+              {item.transcription}
             </div>
           ))}
 
