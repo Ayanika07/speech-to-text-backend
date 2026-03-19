@@ -133,19 +133,33 @@ useEffect(() => {
       </p>
 
       {/* LOGIN */}
-      <button
-        onClick={async () => {
-          const { error } = await supabase.auth.signInWithOtp({
-            email: prompt("Enter your email")
-          });
 
-          if (error) alert(error.message);
-          else alert("Check your email");
-        }}
-        className="mb-4 px-4 py-2 bg-blue-500 rounded"
-      >
-        Login
-      </button>
+<button
+  onClick={async () => {
+    if (cooldown) {
+      alert("⏳ Please wait before requesting again");
+      return;
+    }
+
+    const { error } = await supabase.auth.signInWithOtp({
+      email: prompt("Enter your email")
+    });
+
+    if (error) {
+      alert(error.message);
+    } else {
+      alert("Check your email");
+      setCooldown(true);
+
+      setTimeout(() => {
+        setCooldown(false);
+      }, 60000); // 1 min cooldown
+    }
+  }}
+  className="mb-4 px-4 py-2 bg-blue-500 rounded"
+>
+  Login
+</button>
 
       <div className="bg-white/10 p-6 rounded-xl w-full max-w-xl">
 
