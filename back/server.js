@@ -150,3 +150,30 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+const axios = require("axios");
+
+app.post("/upload-audio", upload.single("audio"), async (req, res) => {
+  try {
+    const audioBuffer = fs.readFileSync(req.file.path);
+
+    const response = await axios.post(
+      "https://api-inference.huggingface.co/models/openai/whisper-small",
+      audioBuffer,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.HF_TOKEN}`,
+          "Content-Type": "audio/wav"
+        }
+      }
+    );
+
+    res.json({
+      transcription: response.data.text
+    });
+
+  } catch (err) {
+    console.error(err.response?.data || err.message);
+    res.status(500).json({ error: "Transcription failed" });
+  }
+});
