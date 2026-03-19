@@ -161,7 +161,15 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
-const transcription = "Demo transcription working";
-res.json({
-  transcription
-})
+app.post("/upload-audio", upload.single("audio"), async (req, res) => {
+  try {
+    const transcription = "Demo transcription working";
+
+    res.json({
+      transcription
+    });
+
+  } catch (error) {
+    res.status(500).json({ error: "Server error" });
+  }
+});
