@@ -1,0 +1,147 @@
+require("dotenv").config();
+console.log("ENV:", process.env.MONGO_URI);
+const express = require("express");
+const mongoose = require("mongoose");
+const cors = require("cors");
+const multer = require("multer");
+const fs = require("fs");
+const path = require("path");
+const { exec } = require("child_process");
+
+const Audio = require("./models/Audio");
+const Transcription = require("./models/Transcription");
+
+const app = express();
+
+app.use(cors());
+app.use(express.json());
+
+/* ---------------- MONGODB ---------------- */
+mongoose.connect("mongodb://127.0.0.1:27017/speechtext")
+  .then(() => console.log("MongoDB connected"))
+  .catch(err => console.log(err));
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log("MongoDB connected"))
+  .catch(err => console.log(err));
+
+
+/* ---------------- UPLOAD FOLDER ---------------- */
+
+const uploadDir = path.join(__dirname, "uploads");
+
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir);
+}
+
+/* ---------------- MULTER STORAGE ---------------- */
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "uploads/");
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + "-" + file.originalname);
+  }
+});
+
+const upload = multer({ storage });
+
+/* ---------------- TEST ROUTE ---------------- */
+
+app.get("/", (req, res) => {
+  res.send("Speech to Text Backend Running");
+});
+
+/* ---------------- GET USER TRANSCRIPTIONS ---------------- */
+
+app.get("/transcriptions", async (req, res) => {
+  try {
+    const { userId } = req.query;
+
+    const data = await Transcription.find({ userId }).sort({ createdAt: -1 });
+
+    res.json(data);
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to fetch transcriptions" });
+  }
+});
+
+/* ---------------- AUDIO UPLOAD + WHISPER ---------------- */
+
+app.post("/upload-audio", upload.single("audio"), async (req, res) => {
+  try {
+
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
+
+    const audioPath = req.file.path;
+
+    console.log("Processing audio:", audioPath);
+
+    const outputBase = path.basename(audioPath, path.extname(audioPath));
+    const outputTextPath = path.join(uploadDir, `${outputBase}.txt`);
+
+    const whisperCommand = `whisper "${audioPath}" --model small --output_dir "${uploadDir}" --output_format txt`;
+    console.log("Running Whisper command:", whisperCommand);
+    exec(whisperCommand, (error, stdout, stderr) => {
+    if (error) {
+      console.error("Whisper CLI error:", error);
+      console.error("Whisper stderr:", stderr);
+      return res.status(500).json({ error: "Whisper transcription failed" });
+    }
+
+    // ✅ Wait a bit to ensure file is created (VERY IMPORTANT)
+    setTimeout(() => {
+
+      fs.readFile(outputTextPath, "utf8", async (readErr, transcription) => {
+
+        if (readErr) {
+          console.error("Failed to read Whisper output:", readErr);
+          return res.status(500).json({ error: "Failed to read transcription" });
+        }
+
+        transcription = transcription.trim();
+        console.log("Transcription:", transcription);
+
+        const userId = req.body.userId;
+
+        const newAudio = new Audio({
+          filename: req.file.filename,
+          transcription
+        });
+
+        await newAudio.save();
+
+        await Transcription.create({
+          transcription,
+          userId
+        });
+
+        res.json({
+          message: "Audio uploaded and transcribed",
+          transcription
+        });
+
+      });
+
+    }, 1000); // ⏱️ delay fix
+
+  }
+);
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+/* ---------------- SERVER ---------------- */
+
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
