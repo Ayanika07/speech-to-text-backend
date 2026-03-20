@@ -26,19 +26,25 @@ app.use(cors());
 app.use(express.json());
 /*---------------- MONGODB CONNECTION ---------------- */
 
+import mongoose from "mongoose";
+
 const connectDB = async () => {
   try {
     if (mongoose.connection.readyState === 1) return;
 
-    await mongoose.connect(process.env.MONGO_URI);
-    console.log("MongoDB Connected");
+    await mongoose.connect(process.env.MONGO_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+
+    console.log("✅ MongoDB Atlas Connected");
   } catch (error) {
-    console.error(error);
+    console.error("❌ MongoDB Connection Error:", error.message);
+    process.exit(1);
   }
 };
 
-connectDB();
-
+export default connectDB;
 
 /* ---------------- UPLOAD FOLDER ---------------- */
 
@@ -202,3 +208,8 @@ app.post("/upload-audio", upload.single("audio"), async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
+import cors from "cors";
+
+app.use(cors({
+  origin: "*"
+}));

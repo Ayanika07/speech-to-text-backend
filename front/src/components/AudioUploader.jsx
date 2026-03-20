@@ -1,6 +1,13 @@
 import { useState, useRef, useEffect } from "react";
 import axios from "axios";
 import { supabase } from "../supabase";
+import cors from "cors";
+
+// Enable CORS for all routes
+const app = express();
+app.use(cors({
+  origin: "https://speech-to-text-backend-17.onrender.com/", // Adjust this to your frontend URL
+}));
 
 function AudioUploader() {
 
