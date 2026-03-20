@@ -22,7 +22,9 @@ const Transcription = require("./models/Transcription");
 
 const app = express();
 
-app.use(cors());
+app.use(cors({
+  origin: "*"
+}));
 app.use(express.json());
 /*---------------- MONGODB CONNECTION ---------------- */
 
@@ -65,7 +67,7 @@ const storage = multer.diskStorage({
   }
 });
 
-const upload = multer({ storage });
+
 
 /* ---------------- TEST ROUTE ---------------- */
 
@@ -208,8 +210,24 @@ app.post("/upload-audio", upload.single("audio"), async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
-import cors from "cors";
 
-app.use(cors({
-  origin: "*"
-}));
+const upload = multer({ dest: "uploads/" });
+
+app.post("/transcribe", upload.single("audio"), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
+
+    console.log("File received:", req.file.path);
+
+    // TEMP RESPONSE (for testing)
+    res.json({
+      transcription: "Test transcription working ✅"
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to transcribe audio" });
+  }
+});
