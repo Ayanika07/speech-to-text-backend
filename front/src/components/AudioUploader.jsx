@@ -1,13 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import axios from "axios";
 import { supabase } from "../supabase";
-import cors from "cors";
-
-// Enable CORS for all routes
-const app = express();
-app.use(cors({
-  origin: "https://speech-to-text-backend-17.onrender.com/", // Adjust this to your frontend URL
-}));
 
 function AudioUploader() {
 
@@ -42,7 +35,7 @@ useEffect(() => {
       setError("");
 
       const res = await axios.post(
-        "http://localhost:5000/upload-audio",
+        "https://speech-to-text-backend-17.onrender.com/upload-audio",
         formData
       );
 
@@ -115,7 +108,7 @@ useEffect(() => {
 
     const fetchTranscriptions = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/transcriptions");
+        const res = await axios.get("https://speech-to-text-backend-17.onrender.com/transcriptions");
         setHistory(res.data);
 
       } catch (err) {
