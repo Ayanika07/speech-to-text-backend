@@ -12,10 +12,12 @@ console.log("ENV:", process.env.MONGO_URI);
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
-const multer = require("multer");
 const fs = require("fs");
 const path = require("path");
 const { exec } = require("child_process");
+const multer = require("multer");
+
+const upload = multer({ dest: "uploads/" });
 
 const Audio = require("./models/Audio");
 const Transcription = require("./models/Transcription");
