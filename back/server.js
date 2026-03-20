@@ -39,6 +39,7 @@ const connectDB = async () => {
 
 connectDB();
 
+
 /* ---------------- UPLOAD FOLDER ---------------- */
 
 const uploadDir = path.join(__dirname, "uploads");
@@ -161,15 +162,43 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+
 app.post("/upload-audio", upload.single("audio"), async (req, res) => {
   try {
-    const transcription = "Demo transcription working";
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
 
-    res.json({
-      transcription
+    const audioPath = req.file.path;
+
+    const outputBase = path.basename(audioPath, path.extname(audioPath));
+    const outputTextPath = path.join(uploadDir, `${outputBase}.txt`);
+
+    const command = `whisper "${audioPath}" --model small --output_dir "${uploadDir}" --output_format txt`;
+
+    exec(command, (error, stdout, stderr) => {
+      if (error) {
+        console.error(error);
+        return res.status(500).json({ error: "Whisper failed" });
+      }
+
+      // Wait for file to be created
+      setTimeout(() => {
+        fs.readFile(outputTextPath, "utf8", (err, data) => {
+          if (err) {
+            return res.status(500).json({ error: "File read failed" });
+          }
+
+          res.json({
+            transcription: data.trim()
+          });
+        });
+      }, 1000);
     });
 
-  } catch (error) {
+  } catch (err) {
+    console.error(err);
     res.status(500).json({ error: "Server error" });
   }
 });
