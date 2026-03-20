@@ -28,7 +28,7 @@ app.use(cors({
 app.use(express.json());
 /*---------------- MONGODB CONNECTION ---------------- */
 
-import mongoose from "mongoose";
+const mongoose = require("mongoose");
 
 const connectDB = async () => {
   try {
