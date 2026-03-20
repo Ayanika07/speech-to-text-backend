@@ -28,8 +28,6 @@ app.use(cors({
 app.use(express.json());
 /*---------------- MONGODB CONNECTION ---------------- */
 
-const mongoose = require("mongoose");
-
 const connectDB = async () => {
   try {
     if (mongoose.connection.readyState === 1) return;
